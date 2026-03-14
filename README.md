@@ -1,68 +1,99 @@
 # Explicit Constructions of Cyclic N-isogenies
 
-This repository contains the **SageMath** implementation accompanying the paper:
+This repository contains SageMath code accompanying the paper:
 
-> **Explicit Constructions of Cyclic N-isogenies**
+> **Explicit Constructions of Cyclic N-isogenies**  
 > *Daeyeol Jeon and Yongjae Kwon*
 
-This project provides algorithms to explicitly construct cyclic $N$-isogenies for sporadic levels where the modular curve $X_0(N)$ has positive genus. The codebase utilizes **SageMath 10.6** and is organized to demonstrate both the uniform algebraic method (for general levels) and a specialized analytic method (for the exceptional case $N=163$).
+The code constructs explicit cyclic $N$-isogenies for sporadic levels where $X_0(N)$ has positive genus, combining:
+- a uniform algebraic pipeline (default path), and
+- an analytic CM cross-check pipeline for $N=163$.
 
-## 📂 Repository Structure
+## Key Features
 
-The project is organized into three main components:
+- `Maps` Explicit rational-map recovery for $a_4, a_6, a_4', a_6'$ on supported $X_0(N)$.
+- `Solver` Degree/precision-controlled workflow for practical high-genus levels.
+- `Analysis` Point-wise isogeny analysis output (domain/codomain invariants, twists, labels).
+- `Notebook UI` Interactive level selection and one-click runs.
+- `N=163 Reference` Optional analytic cross-check notebook for reproducibility.
 
-### 1. `modular_isogeny_lib.sage` (Core Library)
-This library contains the backend algorithms and mathematical definitions used to solve the moduli problems. It implements the core logic described in the paper.
+## AI-Assisted Development Note
 
-#### Key Functions:
-* **`get_model_data(N)`**: Returns the defining plane equation $F(x, y) = 0$ for $X_0(N)$ and the $q$-expansions of coordinate generators.
-* **`setup_modular_forms(N, prec)`**: Computes high-precision $q$-expansions of Eisenstein series ($E_4, E_6$) and the Fricke-twisted $E_2^{(N)}$.
-* **`find_minimal_robust_solution(...)`**: **(Core Solver)** Implements the linear algebra algorithm to express modular invariants ($a_4, a_6$) as rational functions of the curve generators.
-* **`analyze_isogenies(...)`**: Constructs explicit elliptic curves over $\mathbb{Q}$ for the identified rational points and verifies the isogeny class (LMFDB label) and twist factors.
+Parts of implementation, refactoring, and code-organization tasks were assisted by **OpenAI Codex (GPT-5 family)**.  
+All mathematical definitions, derivations, and final computed results were independently checked and validated by the authors.
 
----
+## Repository Structure
 
-### 2. `X0_main.ipynb` (General Levels $N \le 67$)
-The main interactive notebook for computing isogenies for sporadic levels **$N \in \{11, 14, 15, 17, 19, 21, 27, 37, 43, 67\}$**.
+- `Core` `modular_isogeny_lib.sage`  
+  Core library (model data, modular forms, solver, evaluation utilities, isogeny analysis, notebook rendering helpers).
 
-* **Methodology:** Algebraic Approach.
-* **Features:**
-    * Provides a GUI using `ipywidgets`.
-    * Users can select a level $N$ from the dropdown to automatically generate the rational maps and isogeny curves.
-    * Relies on `modular_isogeny_lib.sage` for calculations.
+- `Notebook` `X0_main.ipynb`  
+  Main notebook for algebraic construction and point-wise isogeny analysis.
 
-### 3. `X_0(163).ipynb` (Special Case $N=163$)
-A standalone notebook dedicated to the genus 13 case **$N=163$**.
+- `Reference` `X_0(163).ipynb`  
+  Optional standalone notebook for an analytic $N=163$ cross-check.
+  It is included as a reference/reproducibility aid and was not used as the primary pipeline for the paper's final reported tables.
 
-* **Methodology:** Analytic Approach (Complex Multiplication).
-* **Reasoning:** For $N=163$, the algebraic maps involve polynomials with astronomically large coefficients, making the algebraic approach computationally intractable.
-* **Key Computations:**
-    * **Heegner Point Evaluation:** Evaluates modular forms at $\tau = \frac{-163+\sqrt{-163}}{326}$ with **4000 bits of precision**.
-    * **Rational Reconstruction:** analytically recovers the exact rational coefficients of the isogeny $E \to E'$.
-    * **Verification:** Confirms the twist relationship $D' = -163D$, consistent with the CM endomorphism.
+- `Docs` `FUNCTION_STRUCTURE.md`  
+  Compact reference for function-level architecture.
 
----
+- `Logs` `logs/`  
+  Optional run logs from long computations.
 
-## 🚀 Getting Started
+## Supported Levels
 
-### Prerequisites
-* **SageMath 10.6** (or higher)
-* Standard SageMath libraries and `ipywidgets` (for the GUI in `X0_main.ipynb`).
+The main notebook supports:
+$$
+N \in \{11,14,15,17,19,21,27,37,43,67,163\}.
+$$
 
-### Usage Instructions
+## Output Convention
 
-1.  **For General Levels ($N \le 67$):**
-    * Open **`X0_main.ipynb`**.
-    * Ensure `modular_isogeny_lib.sage` is in the same directory.
-    * Run all cells and use the interactive dropdown to select $N$ and execute the computation.
+Throughout the codebase, solver outputs are identified directly with paper coefficients:
+- `u = a_4`, `v = a_6`,
+- `u_N = a_4'`, `v_N = a_6'`.
 
-2.  **For Level $N=163$:**
-    * Open **`X_0(163).ipynb`**.
-    * Run the cells to perform the high-precision analytic construction and verification.
+The normalization matches
+$$
+a_6 = \frac{E_6}{864\,(E_2^{(N)})^3}.
+$$
 
-## 📜 Citation
+## Main Notebook Behavior (`X0_main.ipynb`)
 
-If you use this code in your research, please cite the paper:
+- Uses `ipywidgets` dropdown for level selection.
+- Uses deterministic fixed-degree fast paths for:
+  - `N=43`: `u,u_N` degree 8; `v,v_N` degree 12.
+  - `N=67`: `u,u_N` degree 15; `v,v_N` degree 19.
+  - `N=163`: `u,u_N` degree 34; `v,v_N` degree 38.
+- For these levels, optional adaptive fallback is available via:
+  - `run_isogeny_construction(N, prec=..., allow_fixed_plan_fallback=True)`.
+
+## Requirements
+
+- SageMath **10.6+** (tested on 10.7)
+- Jupyter + `ipywidgets` for notebook UI
+
+## Database Note (Curve Labels)
+
+Curve labels are obtained through Sage's Cremona database.
+
+- With the default mini database (`cremona_mini.db`), labels may be unavailable for larger conductors.
+- If labels appear as `n/a` for valid curves, install/expand the Cremona data in your Sage environment.
+
+This does **not** affect the core rational-map construction; it only affects label display in analysis output.
+
+## Quick Start
+
+1. Open `X0_main.ipynb` in a Sage/Jupyter environment.
+2. Ensure `modular_isogeny_lib.sage` is in the same directory.
+3. Run all cells.
+4. Select `N` in the dropdown and run.
+
+For an independent $N=163$ analytic reference check, run `X_0(163).ipynb`.
+
+## Citation
+
+If you use this code in research, please cite:
 
 ```bibtex
 @article{jeon_kwon_isogenies,
@@ -73,5 +104,6 @@ If you use this code in your research, please cite the paper:
 }
 ```
 
-## ⚖️ License
-This project is licensed under the MIT License.
+## License
+
+MIT License.
